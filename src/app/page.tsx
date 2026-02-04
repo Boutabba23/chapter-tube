@@ -74,11 +74,22 @@ export default function Home() {
     setLoadingText('Connecting to server...');
 
     try {
+      // Simulate status updates for the user
+      const statusInterval = setInterval(() => {
+        setAnalyzeProgress(prev => (prev < 90 ? prev + 5 : prev));
+        if (analyzeProgress < 30) setLoadingText('Contacting YouTube...');
+        else if (analyzeProgress < 60) setLoadingText('Extracting metadata...');
+        else setLoadingText('Processing response...');
+      }, 2000);
+
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: videoUrl }),
       });
+
+      clearInterval(statusInterval);
+      setAnalyzeProgress(100);
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to analyze video');

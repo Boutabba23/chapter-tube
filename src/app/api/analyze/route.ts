@@ -11,23 +11,51 @@ export async function POST(req: NextRequest) {
 
         // Execute yt-dlp using spawn to handle large metadata strings without buffer limits
         const metadata = await new Promise<any>((resolve, reject) => {
-            const ytDlp = spawn('yt-dlp', ['--dump-json', '--flat-playlist', '--no-warnings', url]);
+            console.log(`Analyzing URL: ${url}`);
+            const ytDlp = spawn('yt-dlp', [
+                '--dump-json',
+                '--no-playlist', // Ensure we only get one video if it's not explicitly a playlist
+                '--no-warnings',
+                '--newline',
+                url
+            ]);
+
             let stdout = '';
             let stderr = '';
 
-            ytDlp.stdout.on('data', (data) => stdout += data.toString());
-            ytDlp.stderr.on('data', (data) => stderr += data.toString());
+            // Set a timeout for the analysis
+            const timeout = setTimeout(() => {
+                ytDlp.kill();
+                reject(new Error('Analysis timed out after 30 seconds. This might be due to a slow connection or yt-dlp hanging.'));
+            }, 30000);
+
+            ytDlp.stdout.on('data', (data) => {
+                stdout += data.toString();
+            });
+
+            ytDlp.stderr.on('data', (data) => {
+                stderr += data.toString();
+                console.log(`yt-dlp stderr: ${data.toString()}`);
+            });
 
             ytDlp.on('close', (code) => {
+                clearTimeout(timeout);
+                console.log(`yt-dlp finished with code ${code}`);
                 if (code === 0) {
                     try {
                         resolve(JSON.parse(stdout));
                     } catch (e) {
-                        reject(new Error('Failed to parse yt-dlp output'));
+                        console.error('Failed to parse JSON:', stdout.slice(0, 500));
+                        reject(new Error('Failed to parse video metadata. The response from YouTube was unexpected.'));
                     }
                 } else {
-                    reject(new Error(`yt-dlp failed with code ${code}: ${stderr}`));
+                    reject(new Error(`yt-dlp failed with code ${code}: ${stderr.slice(-200)}`));
                 }
+            });
+
+            ytDlp.on('error', (err) => {
+                clearTimeout(timeout);
+                reject(new Error(`Failed to start yt-dlp: ${err.message}`));
             });
         });
 
