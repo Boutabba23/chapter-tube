@@ -120,7 +120,6 @@ export async function POST(req: NextRequest) {
                 sendUpdate({
                     status: 'Complete!',
                     progress: 100,
-                    downloadUrl: `/downloads/${downloadId}`, // This would need a way to serve the files
                     folderPath: downloadDir
                 });
 
