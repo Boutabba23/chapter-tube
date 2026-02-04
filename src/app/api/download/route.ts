@@ -2,8 +2,10 @@ import { NextRequest } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import { getCookiesPath, cleanupCookies } from '@/lib/cookies';
 
 export async function POST(req: NextRequest) {
+    const cookiesPath = getCookiesPath();
     const { url, chapters, format, quality, videoTitle } = await req.json();
 
     if (!url || !chapters || !chapters.length) {
@@ -35,14 +37,20 @@ export async function POST(req: NextRequest) {
                     formatArg = `bestvideo[height<=${height}]+bestaudio/best[height<=${height}]/best`;
                 }
 
-                const ytDlp = spawn('yt-dlp', [
+                const ytDlpArgs = [
                     '-f', formatArg,
                     '--merge-output-format', 'mp4',
                     '--newline',
                     '--progress',
                     '-o', videoFile,
                     url
-                ], { shell: true });
+                ];
+
+                if (cookiesPath) {
+                    ytDlpArgs.unshift('--cookies', cookiesPath);
+                }
+
+                const ytDlp = spawn('yt-dlp', ytDlpArgs, { shell: true });
 
                 await new Promise((resolve, reject) => {
                     ytDlp.on('error', (err) => reject(new Error(`Failed to start yt-dlp: ${err.message}`)));
@@ -127,6 +135,8 @@ export async function POST(req: NextRequest) {
             } catch (error: any) {
                 sendUpdate({ error: error.message || 'Download failed' });
                 controller.close();
+            } finally {
+                cleanupCookies(cookiesPath);
             }
         }
     });

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
+import { getCookiesPath, cleanupCookies } from '@/lib/cookies';
 
 export async function POST(req: NextRequest) {
+    const cookiesPath = getCookiesPath();
     try {
         const { url } = await req.json();
 
@@ -12,13 +14,20 @@ export async function POST(req: NextRequest) {
         // Execute yt-dlp using spawn to handle large metadata strings without buffer limits
         const metadata = await new Promise<any>((resolve, reject) => {
             console.log(`Analyzing URL: ${url}`);
-            const ytDlp = spawn('yt-dlp', [
+
+            const args = [
                 '--dump-json',
                 '--no-playlist', // Ensure we only get one video if it's not explicitly a playlist
                 '--no-warnings',
                 '--newline',
                 url
-            ], { shell: true });
+            ];
+
+            if (cookiesPath) {
+                args.unshift('--cookies', cookiesPath);
+            }
+
+            const ytDlp = spawn('yt-dlp', args, { shell: true });
 
             let stdout = '';
             let stderr = '';
@@ -88,6 +97,8 @@ export async function POST(req: NextRequest) {
             error: error.message || 'Failed to analyze video',
             details: error.toString()
         }, { status: 500 });
+    } finally {
+        cleanupCookies(cookiesPath);
     }
 }
 
