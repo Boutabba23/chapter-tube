@@ -10,6 +10,12 @@
 !.yarn/releases
 !.yarn/versions
 
+node_modules
+.next
+Video
+downloads
+.git
+
 # testing
 /coverage
 
