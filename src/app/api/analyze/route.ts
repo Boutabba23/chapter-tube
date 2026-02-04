@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
                 '--no-warnings',
                 '--newline',
                 url
-            ]);
+            ], { shell: true });
 
             let stdout = '';
             let stderr = '';
