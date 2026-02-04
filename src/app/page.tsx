@@ -80,9 +80,8 @@ export default function Home() {
         body: JSON.stringify({ url: videoUrl }),
       });
 
-      if (!response.ok) throw new Error('Failed to analyze video');
-
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to analyze video');
       setVideoData(data);
     } catch (error: any) {
       console.error(error);

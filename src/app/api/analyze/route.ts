@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execPromise = promisify(exec);
+import { spawn } from 'child_process';
 
 export async function POST(req: NextRequest) {
     try {
@@ -12,9 +9,27 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'URL is required' }, { status: 400 });
         }
 
-        // Execute yt-dlp to get metadata in JSON format
-        const { stdout } = await execPromise(`yt-dlp --dump-json --flat-playlist "${url}"`);
-        const metadata = JSON.parse(stdout);
+        // Execute yt-dlp using spawn to handle large metadata strings without buffer limits
+        const metadata = await new Promise<any>((resolve, reject) => {
+            const ytDlp = spawn('yt-dlp', ['--dump-json', '--flat-playlist', '--no-warnings', url]);
+            let stdout = '';
+            let stderr = '';
+
+            ytDlp.stdout.on('data', (data) => stdout += data.toString());
+            ytDlp.stderr.on('data', (data) => stderr += data.toString());
+
+            ytDlp.on('close', (code) => {
+                if (code === 0) {
+                    try {
+                        resolve(JSON.parse(stdout));
+                    } catch (e) {
+                        reject(new Error('Failed to parse yt-dlp output'));
+                    }
+                } else {
+                    reject(new Error(`yt-dlp failed with code ${code}: ${stderr}`));
+                }
+            });
+        });
 
         // Extract relevant info
         const response = {
@@ -33,14 +48,18 @@ export async function POST(req: NextRequest) {
                 startTime: ch.start_time,
                 endTime: ch.end_time,
                 duration: ch.end_time - ch.start_time,
-                thumbnail: metadata.thumbnail // Default to video thumbnail for chapters
+                thumbnail: metadata.thumbnail
             }))
         };
 
         return NextResponse.json(response);
     } catch (error: any) {
         console.error('Analyze Error:', error);
-        return NextResponse.json({ error: error.message || 'Failed to analyze video' }, { status: 500 });
+        // Include the specific error message to help the user diagnose issues (e.g. yt-dlp not in PATH)
+        return NextResponse.json({
+            error: error.message || 'Failed to analyze video',
+            details: error.toString()
+        }, { status: 500 });
     }
 }
 
