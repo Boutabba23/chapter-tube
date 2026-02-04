@@ -1,0 +1,99 @@
+@import "tailwindcss";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+
+:root {
+  --background: #0f0f0f;
+  --foreground: #ffffff;
+}
+
+body {
+  background: #0f0f0f;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  min-height: 100-screen;
+}
+
+@theme {
+  --font-inter: 'Inter', sans-serif;
+  --color-primary: #ef4444;
+}
+
+@layer components {
+  .gradient-text {
+    background: linear-gradient(135deg, #ff0000 0%, #ff6b6b 50%, #ff8e53 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .chapter-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .chapter-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .chapter-card.selected {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+  }
+
+  .quality-badge {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .download-btn {
+    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+    transition: all 0.3s ease;
+  }
+
+  .download-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(255, 0, 0, 0.4);
+  }
+
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+
+  .progress-ring-circle {
+    transition: stroke-dashoffset 0.35s;
+    transform-origin: 50% 50%;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(255, 0, 0, 0.6); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
