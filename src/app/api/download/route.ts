@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
                     '--progress',
                     '-o', videoFile,
                     url
-                ]);
+                ], { shell: true });
 
                 await new Promise((resolve, reject) => {
                     ytDlp.on('error', (err) => reject(new Error(`Failed to start yt-dlp: ${err.message}`)));
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
                     });
 
                     await new Promise((resolve, reject) => {
-                        const ffmpeg = spawn('ffmpeg', ffmpegArgs);
+                        const ffmpeg = spawn('ffmpeg', ffmpegArgs, { shell: true });
                         let stderr = '';
                         ffmpeg.on('error', (err) => reject(new Error(`Failed to start ffmpeg: ${err.message}`)));
                         ffmpeg.stderr.on('data', (data) => {
